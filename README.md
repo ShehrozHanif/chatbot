@@ -1227,3 +1227,15 @@ Let’s consider a real-world example where you have an asynchronous chat applic
 
         # Running the async function
         asyncio.run(main())
+
+
+### In this example:
+
+* calculate_price is synchronous and runs immediately without blocking.
+
+* fetch_data is asynchronous and uses await to simulate waiting for an API call.
+
+Here, the synchronous calculate_price function is executed while the program is "waiting" for the API request to complete.
+
+## Conclusion:
+Yes, you can absolutely run synchronous code inside an asynchronous function. The key takeaway is that as long as the synchronous task doesn’t block the event loop (i.e., doesn't take too long or use resources inefficiently), it's perfectly fine. However, if you're working with long-running synchronous operations, you might need to look into ways of handling those asynchronously to avoid blocking the program.
