@@ -994,4 +994,236 @@ The "role" tells the model who said the message (user or assistant), and "conten
 
  # Question No 6:
  ## How try and except Work in Asynchronous Functions:
+ In Python, try and except are used to handle exceptions (errors) that might occur during code execution. These blocks are a way to catch and handle errors gracefully, without the program crashing.
+
+Using try and except in Async Functions:
+* Inside asynchronous functions, you can perform tasks that take time, like making API calls, waiting for user inputs, or  
+  processing data.
+
+* If anything goes wrong while performing those tasks, the except block can catch the error and handle it without stopping the  
+  entire program.
+
+When using await inside an async function, the code execution will wait for that task to complete before moving on. If an error occurs during this wait, the except block can catch it.
+
+Here’s a simplified version of how this works:
+
+**Example:**
+
+                import asyncio
+
+                async def example_function():
+                    try:
+                        print("Starting process...")
+                        # Simulate a task that could raise an exception
+                        await asyncio.sleep(1)  # This is just a placeholder for async tasks
+                        raise ValueError("Something went wrong!")
+                        print("This will not be printed.")
+                    except ValueError as e:
+                        print(f"Caught an error: {e}")
+                    finally:
+                        print("Execution complete.")
+
+                    # Run the async function
+                    asyncio.run(example_function())
+
+### Explanation of the Code:
+1. try block:
+
+ * In the try block, you place the code that might raise an exception. In this case, we simulate an error by raising a ValueError.
+
+2. await keyword:
+
+ * We use await here to simulate an asynchronous task (asyncio.sleep(1)) that takes time, like making an API call or waiting for a response. If an error occurs during this process, it can be caught by the except block.
+
+3. except block:
+
+* If the error happens (in our case, the ValueError), the except block is executed, and the error is handled without crashing  
+  the program.
+
+4. finally block:
+
+* The finally block is optional. It runs no matter what, and it's useful for cleanup tasks, like closing connections or logging  
+  that the execution has completed.
+
+
+### How It Works in Your Code:
+In your case, the try block is used to:
+
+* Call the agent to get a response.
+
+* Handle any potential errors that might occur during that process (like network issues, API errors, or bad inputs).
+
+If something goes wrong in this part of the code, the except block will catch the error and provide feedback to the user, instead of the whole program crashing.
+
+Here’s the part from your code for reference:
+
+
+                try:
+                    print("\n[CALLING_AGENT_WITH_CONTEXT]\n", history, "\n")
+                    result = Runner.run_sync(starting_agent=agent, input=history, run_config=config)
+                    
+                    response_content = result.final_output
+                    
+                    # Update the thinking message with the actual response
+                    msg.content = response_content
+                    await msg.update()
+
+                    # Update the session with the new history.
+                    cl.user_session.set("chat_history", result.to_input_list())
+                    
+                    # Optional: Log the interaction
+                    print(f"User: {message.content}")
+                    print(f"Assistant: {response_content}")
+                    
+                except Exception as e:
+                    msg.content = f"Error: {str(e)}"
+                    await msg.update()
+                    print(f"Error: {str(e)}")
+
+
+
+### What Happens Here:
+* The try block:
+
+  * It executes the code that might raise an exception. In this case, it runs the agent (Runner.run_sync), updates the message,  
+   and logs the interaction.
+
+  * If everything goes well, the response from the agent is shown to the user.
+
+* The except block:
+
+  * If any error occurs (for example, if the API request fails, or there’s a network issue), the except block catches it.
  
+  * The error message is displayed to the user, and it’s logged for debugging purposes.
+
+### Why Use try and except in Async Functions?
+ * Prevent Program Crashes: Without error handling, if something goes wrong, the whole program might crash. By using try and except, you can catch errors and continue the program’s flow smoothly.
+
+ * Graceful Error Handling: It allows you to provide useful error messages to users (instead of a crash), and optionally log errors for debugging.
+
+#### Real-World Example:
+Imagine you're ordering food from a restaurant (like in a chatbot scenario):
+
+1. User: Sends a message, and the system starts preparing the response (async).
+
+2. System: While preparing the response, if there’s an error (like the kitchen is closed or ingredients are missing), the system 
+   catches the error (inside the except block) and tells the user: "Sorry, there's an issue with your order."
+
+Without the try and except, the user would just get an error, and the system might crash.
+
+
+
+## Conclusion:
+Yes, try and except are fully usable inside asynchronous functions. They allow you to handle errors gracefully, whether you’re waiting for a task to finish asynchronously or handling user input. This approach ensures that your program remains robust and doesn't crash when something goes wrong during asynchronous operations.
+
+Let me know if you need any more clarification!
+
+
+
+# Question No 6 
+## Can we use sync inside asynchronous
+
+
+### Running Synchronous Code Inside Asynchronous Functions:
+It’s common to see synchronous code being called inside an asynchronous function. The key is understanding that:
+
+* Asynchronous code is great for tasks that involve waiting (like I/O operations: reading files, network requests, etc.), but    
+  synchronous code still works fine in async functions, as long as the synchronous code doesn't block the execution.
+
+* If you have a synchronous function that doesn't involve waiting or blocking (like simple calculations), running it inside an  
+  asynchronous function is completely fine.
+
+### Example of Running Synchronous Code in an Asynchronous Function:
+Let’s say you want to calculate the sum of two numbers in a synchronous function, but you're still doing other asynchronous tasks around it.
+
+                import asyncio
+
+                # This is a synchronous function
+                def sync_function():
+                    return 10 + 20
+
+                # This is an asynchronous function
+                async def async_function():
+                    print("Before sync task")
+                    
+                    # Running the sync function inside async
+                    result = sync_function()
+                    print(f"Result of sync function: {result}")
+                    
+                    await asyncio.sleep(2)  # Simulating an async task
+                    
+                    print("After async task")
+
+                # Running the async function
+                asyncio.run(async_function())
+
+
+### Explanation:
+* The sync_function is a regular synchronous function. It computes the sum of two numbers and returns it.
+
+* Inside the async_function, we call the synchronous function sync_function just like we would in any regular Python code.
+
+* Even though the function is async, calling synchronous code inside it works perfectly fine. However, notice that while  
+  synchronous code runs, it doesn't "wait" or "block" other asynchronous tasks from running. So, after running the synchronous code, the program proceeds to the await asyncio.sleep(2) which simulates an asynchronous task.
+
+
+### Example in Your Code Context:
+In the code you provided:
+
+            result = Runner.run_sync(starting_agent=agent, input=history, run_config=config)
+
+* Runner.run_sync() is a synchronous function, which means it will run synchronously and wait for the result before continuing 
+  to the next line of code.
+
+* Even though you're in an asynchronous function (the one with async def main()), you're calling a synchronous function 
+  (run_sync). This works because the function run_sync is just a regular Python function, not an async task.
+
+* The difference is, once run_sync completes and returns the result, you continue running the remaining asynchronous code, like  
+  updating the message (await msg.update()), because asynchronous code doesn't block other parts of the program from running.  
+
+
+### Important Notes:
+1. Blocking Operations in Async Functions:
+
+* If you call a long-running synchronous function inside an asynchronous function, it can block the event loop, which means   
+  other asynchronous tasks cannot run until it’s done. This defeats the purpose of using async/await.
+
+* If you have a long-running synchronous function, consider running it in a separate thread or process to avoid blocking the  
+   event loop.
+
+2. Mixing Async and Sync:
+
+* It’s fine to mix both async and sync code, but be mindful of when and how long synchronous tasks take. If they are blocking (e.
+  g., a time-consuming calculation or file I/O), they may reduce the performance benefits of using async.
+
+#### Real-World Example:
+Let’s consider a real-world example where you have an asynchronous chat application, and you want to fetch some data from an API and perform a calculation while waiting for the response.  
+
+
+        import asyncio
+
+        # Synchronous function for calculation
+        def calculate_price(price, tax_rate):
+            return price + (price * tax_rate)
+
+        # Asynchronous function for API request
+        async def fetch_data():
+            print("Fetching data from API...")
+            await asyncio.sleep(2)  # Simulate API delay
+            print("Data fetched!")
+
+        # Main async function
+        async def main():
+            print("Starting process...")
+            
+            # Call the synchronous function while waiting for the async task
+            price = 100
+            tax_rate = 0.05
+            total_price = calculate_price(price, tax_rate)
+            print(f"Total price after tax: {total_price}")
+            
+            # Simulate waiting for an API call to complete
+            await fetch_data()
+
+        # Running the async function
+        asyncio.run(main())
