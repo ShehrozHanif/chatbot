@@ -1239,3 +1239,257 @@ Here, the synchronous calculate_price function is executed while the program is 
 
 ## Conclusion:
 Yes, you can absolutely run synchronous code inside an asynchronous function. The key takeaway is that as long as the synchronous task doesn’t block the event loop (i.e., doesn't take too long or use resources inefficiently), it's perfectly fine. However, if you're working with long-running synchronous operations, you might need to look into ways of handling those asynchronously to avoid blocking the program.
+
+
+# Question No 7:
+## What does this code do:
+
+                    try:
+                        print("\n[CALLING_AGENT_WITH_CONTEXT]\n", history, "\n")
+
+                    Explain this code in detail and tell me why is history variable in this code and how this work in real time application
+
+                    Then explain this in a similar way
+                    result = Runner.run_sync(starting_agent=agent, input=history, run_config=config)
+                    Tell me where is starting_agent come from
+
+                    Then this code 
+                    cl.user_session.set("chat_history", result.to_input_list())
+
+
+
+### 1. Explanation of history Variable in the Code
+
+            print("\n[CALLING_AGENT_WITH_CONTEXT]\n", history, "\n")
+
+* history is a variable that holds the chat history of the conversation between the user and the assistant. It stores previous  
+  messages and responses exchanged during the chat session.
+
+* Why is history used here?
+
+* The history allows the assistant (the agent) to remember the context of the conversation. Instead of just answering a new 
+ question without context, the assistant can "see" what the user has said earlier and give more relevant, context-aware responses.
+
+* In a real-world chat application, if you didn't keep track of the chat history, the assistant wouldn't know what the user 
+  asked before, leading to disjointed or irrelevant responses.
+
+* In Real-Time Application:
+
+ * Think of a customer support chatbot. If the customer first asks, "What is your refund policy?" and then later asks, "How do I 
+   return an item?" — the assistant must know the context of the first question to give an appropriate response to the second question.
+
+ * History would store the previous questions and answers, and the assistant can use this context to generate better responses.
+
+
+
+### 2. Explanation of result = Runner.run_sync(starting_agent=agent, input=history, run_config=config)
+
+            result = Runner.run_sync(starting_agent=agent, input=history, run_config=config)
+
+* **Runner.run_sync:**
+
+* Runner.run_sync() is a synchronous function that processes the input and interacts with the agent to get a response. It 
+  performs a task synchronously, meaning it waits until the task is completed before moving on to the next one.
+
+* What is starting_agent=agent?
+
+* starting_agent is the agent that you want to use to process the user's input and generate a response.
+
+* agent is an instance of the Agent class, which defines the logic for generating responses based on the model (in this case, 
+  gemini-2.0-flash).
+
+
+        agent: Agent = Agent(name="Assistant", instructions="You are a helpful assistant", model=model)
+
+This code creates an agent instance with a name ("Assistant") and specific instructions (in this case, "You are a helpful assistant"). The agent will then use a model (gemini-2.0-flash) to generate answers.
+
+* **What is input=history?**
+
+ * The input is the chat history that is passed to the agent. The agent uses the conversation's history to understand the context and generate a more accurate, context-aware response.
+
+* **What is run_config=config?**
+
+* run_config contains configuration settings for running the agent, such as whether tracing is enabled or disabled, model  
+  settings, etc.
+
+* The config variable contains this information:
+
+                        config = RunConfig(
+                            model=model,
+                            model_provider=external_client,
+                            tracing_disabled=True
+                        )
+* **In Real-Time Application:**
+
+ * Imagine a customer service chatbot. The starting_agent is like a customer service representative (the assistant). The input 
+  (chat history) helps the agent understand what the customer has previously asked. The run_config tells the agent how to handle things like logging and tracing.
+
+When the customer asks a question, the chat history (including all previous interactions) is passed to the agent. The agent uses this context to generate a response.
+
+
+### 3. Explanation of cl.user_session.set("chat_history", result.to_input_list())
+
+                    cl.user_session.set("chat_history", result.to_input_list())
+
+* **cl.user_session.set:**
+
+ * This function is used to store data in the user's session. The session refers to the ongoing interaction between the user and 
+   the assistant. Anything stored in the session is kept available across different parts of the interaction.
+
+ * Here, you're storing the updated chat history into the session, so it can be accessed later during the conversation.
+
+* **result.to_input_list():**
+
+  * The result is the output returned by the Runner.run_sync() method. It represents the assistant's response along with any  
+    other relevant data (such as input context and responses).
+
+  * result.to_input_list() converts the result into a format that can be stored as part of the chat history. This function  
+    essentially formats the result to match the structure expected by the system for the chat history.
+
+* **Why store the updated chat history?**
+
+  * After the assistant generates a response, you need to update the chat history so that the next time the assistant processes a message, it will have access to the full conversation history.
+
+  * This ensures that the assistant can always respond based on the context of the entire conversation.
+
+* **In Real-Time Application:**
+
+* Going back to the customer service chatbot example, after each response from the assistant, the chat history (including the assistant's response) is stored in the session. This allows the assistant to remember the entire conversation and make informed decisions when generating new responses.
+
+
+
+### Summary of How Everything Works Together:
+
+1. history stores the entire conversation context. It helps the assistant understand the full conversation flow and provide 
+   relevant answers.
+
+2. Runner.run_sync(starting_agent=agent, input=history, run_config=config) processes the input (history), sends it to the 
+   assistant (agent), and returns the assistant's response.
+
+3. After the response is generated, cl.user_session.set("chat_history", result.to_input_list()) updates the chat history in the  
+   session, making it available for the next round of conversation.
+
+### Real-World Example (Customer Support Chatbot):
+Imagine a customer is chatting with a support chatbot:
+
+ * User asks: "What are your business hours?"
+
+   * The assistant responds with: "Our business hours are from 9 AM to 6 PM, Monday to Friday."
+
+* User then asks: "Do you offer weekend support?"
+
+  * The assistant needs to remember that the user previously asked about business hours to ensure it responds appropriately. This is where history comes in — it helps the assistant keep track of the conversation.
+
+Now, when the assistant responds:
+
+* It looks at the entire conversation (history) to understand the context.
+
+* After generating the response, the updated history is stored in the session so the next user query can be handled  
+  appropriately.
+
+
+
+# Question  NO 8 : 
+## So can we do just agent I mean to say don't assign in a starting_agent variable ?
+
+                    Runner.run_sync(starting_agent=agent, input=history, run_config=config)
+
+
+Yes, you can directly pass the agent into the Runner.run_sync() method without assigning it to a separate variable like starting_agent. The code you provided:
+
+
+                result = Runner.run_sync(starting_agent=agent, input=history, run_config=config)
+
+is essentially passing the agent instance to the starting_agent parameter, which is what the Runner.run_sync() method expects. However, the argument name (starting_agent) is just a parameter name used in the method definition. You could call it anything in your method, but the important thing is to pass the correct argument.
+
+If you want to skip the extra variable starting_agent, you can directly pass the agent object like this:
+
+
+                        result = Runner.run_sync(agent, input=history, run_config=config)
+ 
+In this case, you're directly passing agent to the starting_agent parameter in Runner.run_sync().                    
+
+
+
+### Why It Works:
+* The Runner.run_sync() function is expecting an agent to be passed in as the first argument (under the name starting_agent).
+
+* In Python, the names of the variables passed to a function don't matter as long as you pass the correct object type in the 
+  correct position (or by name if you're using named arguments).
+
+#### Example with Direct Assignment:
+
+                    # Directly passing the agent without using starting_agent variable
+                    result = Runner.run_sync(agent, input=history, run_config=config)
+
+Both versions (starting_agent=agent or just agent) will work fine as long as the parameter in Runner.run_sync() is expecting an agent object. In this case, the second version is just more concise, without the need for the starting_agent variable.
+
+#### Summary:
+* Yes, you can directly pass agent into Runner.run_sync() instead of assigning it to a separate variable like starting_agent.
+
+* The function will still work because the key part is passing the agent to the method, regardless of whether it's done  
+   directly or through an intermediate variable.
+
+
+
+# Question No 10: 
+##  What does this code do?
+
+                    except Exception as e:
+                            msg.content = f"Error: {str(e)}"
+                            await msg.update()
+                            print(f"Error: {str(e)}")
+
+                    Now explain me in detail what is str(e)
+
+
+The str(e) in the except block is used to convert the exception object e into a human-readable string format.
+
+Let's break it down:
+* Exception: This is the type of error or problem that occurred during the execution of the code inside the try block. In  
+  Python, all errors and exceptions (such as a ValueError, TypeError, etc.) are objects that inherit from the Exception class.
+
+* e: This is the variable that holds the exception object. When an error occurs, Python creates an exception object and assigns  
+  it to the variable e. This object contains information about the error, such as its type, message, and where it occurred.
+
+* str(e): The str() function is used to convert an object to a string. In the case of an exception object (e), calling str(e)  
+ converts the exception into a string that describes the error. This string will typically contain a message explaining what went wrong. For example, if there's a ValueError, str(e) might return something like 'invalid literal for int() with base 10: "abc"'.                    
+
+
+ ### Example:
+Let's say we have the following code that raises a ValueError:
+
+
+                    try:
+                        x = int("abc")  # This will raise a ValueError
+                    except Exception as e:
+                        print(str(e))  # Print the exception as a string
+
+In this case, when the exception occurs, Python will create an exception object (e) that holds information about the error. The str(e) will convert that object to a string like this:
+
+
+                    invalid literal for int() with base 10: 'abc'
+
+So, the str(e) call helps to print or display a meaningful message that describes the error that occurred.
+
+In Your Code:
+
+                    except Exception as e:
+                        msg.content = f"Error: {str(e)}"  # Set the error message
+                        await msg.update()  # Update the message
+                        print(f"Error: {str(e)}")  # Print the error in the console
+
+
+
+* msg.content = f"Error: {str(e)}": The exception message (str(e)) is used to update the content of the message (msg). So, if an 
+ error occurs, the assistant will send a message back to the user saying, for example, "Error: invalid literal for int() with base 10: 'abc'".
+
+* print(f"Error: {str(e)}"): This prints the error message to the console or logs, which helps in debugging by showing what went 
+ wrong.
+
+### Why Use str(e)?
+* Human-readable format: The str() function converts the exception into a format that is easy to understand.
+
+* Debugging: When an error occurs, you often want to know the details of the exception so you can fix it. Using str(e) allows you to see the actual message of the error.
+
+In short, str(e) is a way to retrieve and print a readable description of the exception, making it easier to understand what went wrong in your code.
